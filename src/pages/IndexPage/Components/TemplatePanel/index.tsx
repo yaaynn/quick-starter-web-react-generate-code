@@ -198,9 +198,7 @@ export const TemplatePanel = (props: TemplatePanelProps) => {
                             </>
                           }
                         >
-                          <Typography.Link href="#API">
-                            帮助信息
-                          </Typography.Link>
+                          <Button type={"link"}>帮助信息</Button>
                         </Tooltip>
                       </Space>
                     </Form.Item>
