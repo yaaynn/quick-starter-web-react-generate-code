@@ -1,6 +1,6 @@
 import { useLocation, useNavigate, useRoutes } from "react-router-dom";
 import { routes } from "./routes";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCore } from "./providers/CoreProvider.tsx";
 
 import { TokenNames } from "./static-data/token-names.ts";
@@ -14,6 +14,7 @@ function App() {
   const navigate = useNavigate();
   const { core } = useCore();
   const initial = useRef<boolean>(false);
+  const [axiosReady, setAxiosReady] = useState(false); // 👈 用 state 控制是否初始化完成
 
   const { pathname } = location;
 
@@ -104,8 +105,6 @@ function App() {
     );
   }
 
-  initialAxios();
-
   /**
    * 跳转到登录页
    */
@@ -119,7 +118,9 @@ function App() {
   useEffect(() => {
     if (initial.current) return;
     initial.current = true;
+    initialAxios();
     checkJwt();
+    setAxiosReady(true);
   }, []);
 
   useEffect(() => {
@@ -129,6 +130,9 @@ function App() {
     toSignIn();
   }, [pathname]);
 
+  if (!axiosReady) {
+    return void 0;
+  }
   return <>{elements}</>;
 }
 
