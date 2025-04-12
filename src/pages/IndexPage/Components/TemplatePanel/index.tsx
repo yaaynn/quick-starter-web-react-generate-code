@@ -159,16 +159,11 @@ export const TemplatePanel = (props: TemplatePanelProps) => {
                     </Form.Item>
                     <Form.Item label={"命名规则"}>
                       <Space>
-                        <Form.Item
-                          name="username"
-                          noStyle
-                          rules={[
-                            { required: true, message: "Username is required" },
-                          ]}
-                        >
+                        <Form.Item noStyle>
                           <Input
                             placeholder={"请输入命名规则"}
                             style={{ width: 260 }}
+                            value={item.naming}
                             onChange={(e) => {
                               handleTemplateConfigValueChange(
                                 item.name,
