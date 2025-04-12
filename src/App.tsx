@@ -104,6 +104,8 @@ function App() {
     );
   }
 
+  initialAxios();
+
   /**
    * 跳转到登录页
    */
@@ -117,7 +119,6 @@ function App() {
   useEffect(() => {
     if (initial.current) return;
     initial.current = true;
-    initialAxios();
     checkJwt();
   }, []);
 
@@ -127,6 +128,7 @@ function App() {
     if (token) return;
     toSignIn();
   }, [pathname]);
+
   return <>{elements}</>;
 }
 
