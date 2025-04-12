@@ -1,0 +1,136 @@
+html, body, :root, #root {
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  width: 100vw;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  overflow: hidden;
+  box-sizing: border-box;
+
+  color-scheme: light dark;
+  color: #333333;
+}
+#root{
+  background-color: #f6f6f6;
+}
+
+/* 所有元素的纵向滚动条整体样式 */
+*::-webkit-scrollbar {
+  width: 12px; /* 滚动条宽度 */
+  border-radius: 6px;
+}
+
+/* 所有元素的横向滚动条整体样式 */
+*::-webkit-scrollbar {
+  height: 12px; /* 滚动条高度 */
+  border-radius: 6px;
+}
+
+/* 所有元素的滚动条轨道样式 */
+*::-webkit-scrollbar-track {
+  background: #f1f1f1; /* 轨道颜色 */
+  border-radius: 6px; /* 圆角 */
+}
+
+/* 所有元素的滚动条滑块样式 */
+*::-webkit-scrollbar-thumb {
+  background: #888; /* 滑块颜色 */
+  border-radius: 6px; /* 圆角 */
+}
+
+/* 所有元素的滚动条滑块悬停样式 */
+*::-webkit-scrollbar-thumb:hover {
+  background: #555; /* 悬停时的颜色 */
+}
+
+/* Firefox 滚动条宽度 */
+* {
+  scrollbar-width: thin; /* 可以是 auto | thin | none */
+  scrollbar-color: #888 #f1f1f1; /* 第一个值是滑块颜色，第二个值是轨道颜色 */
+}
+
+/* z-index*/
+.z-index-19951217{
+  z-index: 19951217;
+}
+
+/*交易记录表格*/
+.transaction-records-table{
+  width: 100%;
+  border-collapse: collapse;
+  thead tr td {
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+  }
+  td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #ddd;
+  }
+}
+/*金属文字*/
+.metallic-silver-text {
+  font-weight: bold; /* 文字加粗 */
+  /* 金属银色渐变 */
+  background: linear-gradient(45deg, #e0e0e0, #bfbfbf, #d0d0d0);
+  background-clip: text; /* 将背景应用到文字 */
+  -webkit-background-clip: text; /* Safari 支持 */
+  color: transparent; /* 让文字本身透明，只显示背景 */
+
+}
+
+/**
+ * 自定义变量
+ */
+
+:root:root{
+  --adm-button-border-radius: 0;
+}
+
+.adm-toast-icon {
+  svg {
+    display: inline-block;
+  }
+}
+/**
+ * 自定义数字输入框样式
+ */
+.number-up-down-field {
+  display: flex;
+  align-items: center;
+  border: 1px solid #d9d9d9;
+  border-radius: 2px;
+  background-color: #ffffff;
+
+  .change-btn {
+    border-radius: 0;
+  }
+
+  .ant-input-number {
+    border-top: none;
+    border-bottom: none;
+    border-radius: 0;
+    flex: 1;
+
+    .ant-input-number-input {
+      padding: 0;
+      text-align: center;
+    }
+
+    .ant-input-number-handler-wrap {
+      display: none; // 隐藏默认的上下按钮
+    }
+  }
+}
+
+.after-content-blank {
+  ::after{
+    content: "";
+  }
+}
