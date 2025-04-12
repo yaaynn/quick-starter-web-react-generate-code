@@ -117,7 +117,6 @@ function App() {
   useEffect(() => {
     if (initial.current) return;
     initial.current = true;
-    initialAxios();
     checkJwt();
   }, []);
 
@@ -127,6 +126,9 @@ function App() {
     if (token) return;
     toSignIn();
   }, [pathname]);
+
+  initialAxios();
+
   return <>{elements}</>;
 }
 
