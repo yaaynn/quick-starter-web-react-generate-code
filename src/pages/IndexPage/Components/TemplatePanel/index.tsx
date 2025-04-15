@@ -50,7 +50,9 @@ export const TemplatePanel = (props: TemplatePanelProps) => {
     });
     setTemplateConfigs(newConfig);
   }
-
+  function isChecked(value: string | number) {
+    return value !== void 0 && value !== "";
+  }
   useEffect(() => {
     if (!props.templateNames) {
       setTemplateConfigs([]);
@@ -58,7 +60,6 @@ export const TemplatePanel = (props: TemplatePanelProps) => {
     }
 
     const temp = props.templateNames.map((item) => {
-      console.log(item);
       const config = props.templateConfig?.find(
         (templateConfig) => templateConfig.name === item,
       );
@@ -88,14 +89,10 @@ export const TemplatePanel = (props: TemplatePanelProps) => {
           label: (
             <Space>
               <div>{item.name}</div>
-              <Checkbox checked={item.outputPath != undefined}>
-                输出路径
-              </Checkbox>
-              <Checkbox checked={item.extension != undefined}>
-                文件扩展
-              </Checkbox>
-              <Checkbox checked={item.codeType != undefined}>代码类型</Checkbox>
-              <Checkbox checked={item.naming != undefined}>代码类型</Checkbox>
+              <Checkbox checked={isChecked(item.outputPath)}>输出路径</Checkbox>
+              <Checkbox checked={isChecked(item.extension)}>文件扩展</Checkbox>
+              <Checkbox checked={isChecked(item.codeType)}>代码类型</Checkbox>
+              <Checkbox checked={isChecked(item.naming)}>代码类型</Checkbox>
             </Space>
           ),
           children: (
