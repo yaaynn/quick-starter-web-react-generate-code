@@ -47,7 +47,6 @@ export const HomePage = () => {
 
     const pathnameArray = pathname.split("/");
     if (pathnameArray.length > 1) {
-      console.log([pathnameArray[1]]);
       setOpenKeys([pathnameArray[1]]);
     }
     setSelectedKeys([pathname]);

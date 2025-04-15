@@ -117,9 +117,7 @@ export const GenerateCodePanel = (props: GenerateCodePanelProps) => {
 
         props.onWrite2File?.(checkedItems);
       },
-      onCancel() {
-        console.log("Cancel");
-      },
+      onCancel() {},
     });
   }
 
@@ -140,8 +138,16 @@ export const GenerateCodePanel = (props: GenerateCodePanelProps) => {
       if (!templateConfig) {
         continue;
       }
-      const codeContent = nunjucksUtil.render(templateContent, templateConfig);
-      codeResult.push(codeContent);
+      try {
+        const codeContent = nunjucksUtil.render(
+          templateContent,
+          templateConfig,
+        );
+        codeResult.push(codeContent);
+      } catch (e) {
+        const { message } = e as Error;
+        core.showErrorMessage("模板渲染失败", message);
+      }
     }
     setCodes(codeResult ?? []);
   }, [props.templateContents, nunjucksUtil]);

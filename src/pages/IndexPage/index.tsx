@@ -265,7 +265,6 @@ export const IndexPage = () => {
           );
 
           setTemplateContents(newContent);
-          console.log(newContent);
         }
       });
   }
