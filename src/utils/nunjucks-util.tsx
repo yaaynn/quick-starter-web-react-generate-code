@@ -6,13 +6,20 @@ import {
   NameAndComment,
   TemplateConfig,
 } from "../@types/global";
+import {
+  mysqlToJavaTypeMap,
+  mysqlToTsTypeMap,
+} from "../static-data/data-types.tsx";
 
 export interface NunjucksUtilDataProps {
   databaseName?: string;
   tableInfo?: NameAndComment;
   columnInfos?: ColumnMetadata[];
   templateConfigs?: TemplateConfig[];
+  mysqlToJavaTypeMap?: Map<string, string>;
+  sqlToCodeTypeMap?: Map<string, string>;
 }
+
 /**
  * 将单词首字母大写，其余小写
  * @example "hello" → "Hello"
@@ -35,8 +42,11 @@ export interface GenerateCodeResult {
 export class NunjucksUtil {
   private env;
   private readonly data: NunjucksUtilDataProps;
-  constructor(data: NunjucksUtilDataProps) {
+  private readonly databaseType: string;
+  constructor(data: NunjucksUtilDataProps, databaseType: string = "mysql") {
     this.data = data;
+    this.databaseType = databaseType;
+
     this.env = nunjucks.configure({});
     this.initial();
   }
@@ -52,6 +62,7 @@ export class NunjucksUtil {
       .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join("-");
   }
+
   /**
    * 将下划线字符串转换为驼峰命名 (camelCase)
    * @example "my_variable_name" → "myVariableName"
@@ -68,6 +79,7 @@ export class NunjucksUtil {
       })
       .join("");
   }
+
   /**
    * 将下划线字符串转换为帕斯卡命名 (PascalCase)
    * @example "my_variable_name" → "MyVariableName"
@@ -80,10 +92,19 @@ export class NunjucksUtil {
       .join("");
   }
 
+  /**
+   * 获取数据库类型
+   * @param value
+   */
+  getSqlToCodeTypeName(value: string) {
+    return this.data.sqlToCodeTypeMap?.get(value) || value;
+  }
+
   initial() {
     this.env.addFilter("toApacheCase", this.toApacheCase);
     this.env.addFilter("toPascalCase", this.toPascalCase);
     this.env.addFilter("toCamelCase", this.toCamelCase);
+    this.env.addFilter("getSqlToCodeTypeName", this.getSqlToCodeTypeName);
   }
 
   getTemplateConfig(name: string) {
@@ -92,9 +113,26 @@ export class NunjucksUtil {
     return templateConfig;
   }
 
+  getSqlTypeMap(codeType: string) {
+    switch (this.databaseType) {
+      case "mysql":
+        switch (codeType) {
+          case "java":
+            return mysqlToJavaTypeMap;
+          case "js":
+          case "ts":
+            return mysqlToTsTypeMap;
+        }
+    }
+  }
+
   render(template: string, templateConfig: TemplateConfig): GenerateCodeResult {
+    const sqlToCodeTypeMap = this.getSqlTypeMap(templateConfig.codeType);
+
     const codeContent = this.env.renderString(template, {
       ...this.data,
+      sqlToCodeTypeMap: sqlToCodeTypeMap,
+      mysqlToJavaTypeMap: mysqlToJavaTypeMap,
       templateConfig: templateConfig,
     });
     const [fileName, outputPath] = this.generateOutputPath(templateConfig);
@@ -107,9 +145,11 @@ export class NunjucksUtil {
       codeType: templateConfig.codeType,
     };
   }
+
   private renderFileNaming(name: string, tableName: string) {
     return this.env.renderString(name, { name: tableName });
   }
+
   private generateOutputPath(templateConfig: TemplateConfig) {
     const fileName = `${this.renderFileNaming(templateConfig.naming, this.data.tableInfo!.name)}${templateConfig.extension}`;
 
