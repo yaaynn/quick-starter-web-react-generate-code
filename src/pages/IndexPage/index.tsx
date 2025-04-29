@@ -37,12 +37,15 @@ export const IndexPage = () => {
   const [templateGroupNames, setTemplateGroupNames] = useState<
     string[] | undefined
   >([]);
+  const [templateGroupName, setTemplateGroupName] = useState<string>("");
   const [templateNames, setTemplateNames] = useState<string[] | undefined>([]);
-  const [templateConfig, setTemplateConfig] = useState<
+
+  const [templateConfigNames, setTemplateConfigNames] = useState<string[]>([]);
+  const [templateConfigName, setTemplateConfigName] = useState<string>("");
+
+  const [templateConfigs, setTemplateConfigs] = useState<
     TemplateConfig[] | undefined
   >();
-
-  const [templateGroupName, setTemplateGroupName] = useState<string>("");
 
   const [templateContents, setTemplateContents] = useState<
     Map<string, string> | undefined
@@ -160,76 +163,105 @@ export const IndexPage = () => {
   // endregion
 
   // region 模板
-  function doRefreshTemplate() {
+  // 刷新模板目录
+  function doRefreshTemplateGroupNames() {
     core.axios.get(HttpUrls.template.getTemplateGroupNames).then((res) => {
       const result = res as unknown as BackResult<string[]>;
 
       if (result.code === 200) {
         setTemplateGroupNames(result.data);
-        if (!result.data.includes(templateGroupName)) {
-          setDatabaseName(void 0);
-        }
       } else {
         setTemplateGroupNames([]);
-        setDatabaseName(void 0);
       }
+      setTemplateGroupName("");
+      setTemplateConfigs([]);
+      setTemplateNames([]);
+      setTemplateConfigNames([]);
+      setTemplateConfigName("");
     });
   }
-
-  function doRefreshTemplateNames(name: string) {
-    core.showLoading("Loading...");
-    core.axios
-      .get(HttpUrls.template.getTemplateNames, { params: { groupName: name } })
-      .then((res) => {
-        const result = res as unknown as BackResult<string[]>;
-        if (result.code === 200) {
-          setTemplateNames(result.data);
-          doRefreshTemplateConfig(name);
-        }
-      })
-      .catch(() => {
-        core.closeLoading();
-      });
-  }
-  function doRefreshTemplateConfig(name: string) {
-    core.axios
-      .get(HttpUrls.template.getTemplateConfig, {
-        params: { groupName: name },
-      })
-      .then((res) => {
-        const result = res as unknown as BackResult<string>;
-        if (result.code === 200) {
-          if (result.data) {
-            setTemplateConfig(JSON.parse(result.data));
-          } else {
-            setTemplateConfig(void 0);
-          }
-        }
-      })
-      .finally(() => {
-        core.closeLoading();
-      });
-  }
-
-  function handleTemplateGroupNameChange(name: string) {
+  // 当模板配置组名称发生修改的时候
+  async function handleTemplateGroupNameChange(name: string) {
     setTemplateGroupName(name);
-    doRefreshTemplateNames(name);
+    core.showLoading("Loading...");
+    try {
+      await doRefreshTemplateNames(name);
+      setTemplateConfigName("");
+      await doRefreshTemplateConfigNames(name);
+    } finally {
+      core.closeLoading();
+    }
+  }
+
+  // 获取模板目录下的配置文件
+  async function doRefreshTemplateConfigNames(name: string) {
+    const res = await core.axios.get(
+      HttpUrls.template.getTemplateGroupConfigNames,
+      {
+        params: { groupName: name },
+      },
+    );
+    const result = res as unknown as BackResult<string[]>;
+    setTemplateConfigNames(result.data);
+  }
+  async function doRefreshTemplateNames(name: string) {
+    const res = await core.axios.get(HttpUrls.template.getTemplateNames, {
+      params: { groupName: name },
+    });
+
+    const result = res as unknown as BackResult<string[]>;
+    if (result.code === 200) {
+      setTemplateNames(result.data);
+    }
+  }
+
+  // 获取模板配置
+  function handleTemplateConfigNameChange(name: string) {
+    setTemplateConfigName(name);
+    doRefreshTemplateConfig(templateGroupName, name);
+  }
+  async function doRefreshTemplateConfig(
+    templateGroupName: string,
+    templateConfigName: string,
+  ) {
+    core.showLoading("Loading...");
+    try {
+      const res = await core.axios.get(HttpUrls.template.getTemplateConfig, {
+        params: {
+          groupName: templateGroupName,
+          configName: templateConfigName,
+        },
+      });
+      const result = res as unknown as BackResult<string>;
+      if (result.data) {
+        setTemplateConfigs(JSON.parse(result.data));
+      } else {
+        setTemplateConfigs(void 0);
+      }
+    } finally {
+      core.closeLoading();
+    }
   }
 
   function handleSaveTemplateConfig(
     templateConfig: TemplateConfig[] | undefined,
   ) {
     const config = JSON.stringify(templateConfig);
-    doSaveTemplateConfig(config);
-    setTemplateConfig(templateConfig);
+    doSaveTemplateConfig(config, templateGroupName, templateConfigName);
+    setTemplateConfigs(templateConfig);
   }
-  function doSaveTemplateConfig(config: string) {
+  function doSaveTemplateConfig(
+    config: string,
+    groupName: string,
+    configName: string,
+  ) {
     core.showLoading("Loading...");
     core.axios
       .post(
         HttpUrls.template.saveTemplateConfig,
         {
-          groupName: templateGroupName,
+          groupName: groupName,
+          configName: configName,
           templateConfig: config,
         },
         {
@@ -384,7 +416,7 @@ export const IndexPage = () => {
   // endregion
   useEffect(() => {
     doRefreshDatabaseNames();
-    doRefreshTemplate();
+    doRefreshTemplateGroupNames();
   }, []);
 
   const items: CollapseProps["items"] = [
@@ -437,7 +469,7 @@ export const IndexPage = () => {
             icon={<RedoOutlined />}
             onClick={(e) => {
               e.stopPropagation(); // 阻止事件冒泡
-              doRefreshTemplate();
+              doRefreshTemplateGroupNames();
             }}
           ></Button>
         </div>
@@ -445,10 +477,17 @@ export const IndexPage = () => {
       children: (
         <TemplatePanel
           templateGroupNames={templateGroupNames}
+          templateGroupName={templateGroupName}
           templateNames={templateNames}
-          templateConfig={templateConfig}
+          templateConfigs={templateConfigs}
+          templateConfigNames={templateConfigNames}
+          templateConfigName={templateConfigName}
           onTemplateGroupNameChange={handleTemplateGroupNameChange}
           onSaveTemplateConfig={handleSaveTemplateConfig}
+          onTemplateConfigsChange={(newTemplateConfigs) => {
+            setTemplateConfigs(newTemplateConfigs);
+          }}
+          onTemplateConfigNameChange={handleTemplateConfigNameChange}
         ></TemplatePanel>
       ),
     },
@@ -463,7 +502,7 @@ export const IndexPage = () => {
           tableInfo={tableInfo}
           columnsInfo={columnsDataSource}
           templateContents={templateContents}
-          templateConfigs={templateConfig}
+          templateConfigs={templateConfigs}
           templateGroupName={templateGroupName}
           onGenerateCode={handleGenerateCode}
           onWrite2File={handleWrite2File}
