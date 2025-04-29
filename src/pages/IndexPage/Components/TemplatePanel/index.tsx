@@ -4,7 +4,6 @@ import {
   Collapse,
   CollapseProps,
   Form,
-  Input,
   List,
   Select,
   Space,
@@ -12,34 +11,46 @@ import {
   Tooltip,
   Typography,
 } from "antd";
-import { TemplateConfig } from "../../../../@types/global";
-import { useEffect, useState } from "react";
+import { KeyAndValue, TemplateConfig } from "../../../../@types/global";
+import { useEffect, useRef, useState } from "react";
+import { FinalInput } from "../../../../components/FinalInput.tsx";
 
 export interface TemplatePanelProps {
   templateGroupNames?: string[];
+  templateGroupName?: string;
+  templateConfigNames?: string[];
+  templateConfigName?: string;
+
   templateNames?: string[];
-  templateConfig?: TemplateConfig[];
+  templateConfigs?: TemplateConfig[];
+  onTemplateConfigsChange: (templateConfigs?: TemplateConfig[]) => void;
   onTemplateGroupNameChange?: (groupName: string) => void;
   onSaveTemplateConfig?: (templateConfig: TemplateConfig[] | undefined) => void;
+
+  onTemplateConfigNameChange?: (templateConfigName: string) => void;
 }
 const { Title } = Typography;
 
 export const TemplatePanel = (props: TemplatePanelProps) => {
-  const [templateConfigs, setTemplateConfigs] = useState<
-    TemplateConfig[] | undefined
-  >();
   const [items, setItems] = useState<CollapseProps["items"]>([]);
+
+  const fileType = ["java", "js", "ts", "jsx", "tsx", "python", "xml"];
+  const templateConfigs = useRef<TemplateConfig[] | undefined>(void 0);
+  const templateGroupNames = useRef<string[] | undefined>(void 0);
 
   function handleTemplateGroupNameChange(groupName: string) {
     props.onTemplateGroupNameChange?.(groupName);
+  }
+  function handleTemplateConfigNameChange(templateConfigName: string) {
+    props.onTemplateConfigNameChange?.(templateConfigName);
   }
 
   function handleTemplateConfigValueChange(
     name: string,
     key: keyof TemplateConfig,
-    value: string,
+    value: string | KeyAndValue[],
   ) {
-    const newConfig = templateConfigs?.map((templateConfig) => {
+    const newConfig = props.templateConfigs?.map((templateConfig) => {
       if (templateConfig.name === name) {
         return {
           ...templateConfig,
@@ -48,19 +59,34 @@ export const TemplatePanel = (props: TemplatePanelProps) => {
       }
       return templateConfig;
     });
-    setTemplateConfigs(newConfig);
+    props.onTemplateConfigsChange?.(newConfig);
   }
+
+  function checkTemplateConfigsChange() {
+    if (
+      props.templateConfigs === templateConfigs.current &&
+      props.templateGroupNames === templateGroupNames.current
+    ) {
+      return false;
+    }
+
+    templateConfigs.current = props.templateConfigs;
+    templateGroupNames.current = props.templateGroupNames;
+    return true;
+  }
+
   function isChecked(value: string | number) {
     return value !== void 0 && value !== "";
   }
   useEffect(() => {
     if (!props.templateNames) {
-      setTemplateConfigs([]);
+      props.onTemplateConfigsChange?.([]);
       return;
     }
+    if (!checkTemplateConfigsChange()) return;
 
     const temp = props.templateNames.map((item) => {
-      const config = props.templateConfig?.find(
+      const config = props.templateConfigs?.find(
         (templateConfig) => templateConfig.name === item,
       );
       if (config) {
@@ -72,38 +98,49 @@ export const TemplatePanel = (props: TemplatePanelProps) => {
         extension: "",
         codeType: "",
         naming: "{{ name | toPascalCase }}",
+        additions: [],
       };
     });
-    setTemplateConfigs(temp);
-  }, [props.templateConfig, props.templateNames]);
+
+    templateConfigs.current = temp;
+
+    props.onTemplateConfigsChange?.(temp);
+  }, [props.templateConfigs, props.templateNames]);
 
   useEffect(() => {
-    if (!templateConfigs || templateConfigs.length === 0) {
+    if (!props.templateConfigs || props.templateConfigs.length === 0) {
       setItems([]);
       return;
     }
+
     const temp: CollapseProps["items"] | undefined =
-      templateConfigs.map((item: TemplateConfig, index: number) => {
+      props.templateConfigs?.map((item: TemplateConfig, index: number) => {
         return {
           key: index,
           label: (
-            <Space>
+            <div className={"w-full flex justify-between"}>
               <div>{item.name}</div>
-              <Checkbox checked={isChecked(item.outputPath)}>输出路径</Checkbox>
-              <Checkbox checked={isChecked(item.extension)}>文件扩展</Checkbox>
-              <Checkbox checked={isChecked(item.codeType)}>代码类型</Checkbox>
-              <Checkbox checked={isChecked(item.naming)}>代码类型</Checkbox>
-            </Space>
+              <Space>
+                <Checkbox checked={isChecked(item.outputPath)}>
+                  输出路径
+                </Checkbox>
+                <Checkbox checked={isChecked(item.extension)}>
+                  文件扩展
+                </Checkbox>
+                <Checkbox checked={isChecked(item.codeType)}>代码类型</Checkbox>
+                <Checkbox checked={isChecked(item.naming)}>代码类型</Checkbox>
+              </Space>
+            </div>
           ),
           children: (
             <div key={item.name}>
               <Title level={3}>{item.name.replace(".njk", "")}</Title>
               <Form layout={"vertical"}>
                 <Form.Item label={"输出路径"}>
-                  <Input
+                  <FinalInput
                     placeholder={`请输入[${item.name.replace(".njk", "")}]输出路径`}
                     value={item.outputPath ?? ""}
-                    onChange={(e) => {
+                    onFinalChange={(e) => {
                       handleTemplateConfigValueChange(
                         item.name,
                         "outputPath",
@@ -126,7 +163,7 @@ export const TemplatePanel = (props: TemplatePanelProps) => {
                           );
                         }}
                       >
-                        {["jave", "js", "ts", "jsx", "tsx"].map((item) => (
+                        {fileType.map((item) => (
                           <Select.Option value={`.${item}`} key={item}>
                             {`.${item}`}
                           </Select.Option>
@@ -145,23 +182,21 @@ export const TemplatePanel = (props: TemplatePanelProps) => {
                           );
                         }}
                       >
-                        {["jave", "js", "ts", "jsx", "tsx", "python"].map(
-                          (item) => (
-                            <Select.Option value={item} key={item}>
-                              {item}
-                            </Select.Option>
-                          ),
-                        )}
+                        {fileType.map((item) => (
+                          <Select.Option value={item} key={item}>
+                            {item}
+                          </Select.Option>
+                        ))}
                       </Select>
                     </Form.Item>
                     <Form.Item label={"命名规则"}>
                       <Space>
                         <Form.Item noStyle>
-                          <Input
+                          <FinalInput
                             placeholder={"请输入命名规则"}
                             style={{ width: 260 }}
                             value={item.naming}
-                            onChange={(e) => {
+                            onFinalChange={(e) => {
                               handleTemplateConfigValueChange(
                                 item.name,
                                 "naming",
@@ -201,30 +236,130 @@ export const TemplatePanel = (props: TemplatePanelProps) => {
                     </Form.Item>
                   </Space>
                 </Form.Item>
+                <Form.Item noStyle={true}>
+                  {item.additions?.map((addition, index) => {
+                    return (
+                      <div
+                        className={"w-full flex justify-between"}
+                        key={index}
+                      >
+                        <div style={{ width: "49%" }}>
+                          <Form.Item label={"Key"}>
+                            <FinalInput
+                              placeholder={"请输入Key"}
+                              value={addition.key}
+                              onFinalChange={(e) => {
+                                const newAdditions = item.additions?.map(
+                                  (temp, i) => {
+                                    if (i === index) {
+                                      return {
+                                        ...temp,
+                                        key: e.target.value,
+                                      };
+                                    }
+                                    return temp;
+                                  },
+                                );
+                                handleTemplateConfigValueChange(
+                                  item.name,
+                                  "additions",
+                                  newAdditions ?? [],
+                                );
+                              }}
+                            />
+                          </Form.Item>
+                        </div>
+                        <div style={{ width: "49%" }}>
+                          <Form.Item label={"Value"}>
+                            <FinalInput
+                              placeholder={"请输入Key"}
+                              value={addition.value}
+                              onFinalChange={(e) => {
+                                const newAdditions = item.additions?.map(
+                                  (temp, i) => {
+                                    if (i === index) {
+                                      return {
+                                        ...temp,
+                                        value: e.target.value,
+                                      };
+                                    }
+                                    return temp;
+                                  },
+                                );
+                                handleTemplateConfigValueChange(
+                                  item.name,
+                                  "additions",
+                                  newAdditions ?? [],
+                                );
+                              }}
+                            />
+                          </Form.Item>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </Form.Item>
+                <Form.Item>
+                  <Button
+                    type={"primary"}
+                    block={true}
+                    onClick={() => {
+                      handleTemplateConfigValueChange(item.name, "additions", [
+                        ...(item.additions ?? []),
+                        { key: "", value: "" },
+                      ]);
+                    }}
+                  >
+                    添加新属性
+                  </Button>
+                </Form.Item>
               </Form>
             </div>
           ),
         };
       }) ?? [];
     setItems(temp ?? []);
-  }, [templateConfigs]);
+  }, [props.templateConfigs]);
 
   return (
     <>
       <div>
         <Form>
-          <Form.Item label={"模板"}>
-            <Select
-              onChange={(value) => {
-                handleTemplateGroupNameChange(value);
-              }}
-            >
-              {props.templateGroupNames?.map((item, i) => (
-                <Select.Option key={i} value={item}>
-                  {item}
-                </Select.Option>
-              ))}
-            </Select>
+          <Form.Item noStyle>
+            <div className={"w-full flex"}>
+              <div className={"w-1/2 pr-2"}>
+                <Form.Item label={"模板组"}>
+                  <Select
+                    onChange={(value) => {
+                      handleTemplateGroupNameChange(value);
+                    }}
+                    value={props.templateGroupName}
+                  >
+                    {props.templateGroupNames?.map((item, i) => (
+                      <Select.Option key={i} value={item}>
+                        {item}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </div>
+              <div className={"w-1/2 pl-2"}>
+                <Form.Item label={"模板配置"}>
+                  <Select
+                    onChange={(value) => {
+                      handleTemplateConfigNameChange(value);
+                    }}
+                    value={props.templateConfigName}
+                  >
+                    {props.templateConfigNames?.map((item, i) => (
+                      <Select.Option key={i} value={item}>
+                        {item.replace(".json", "")}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </div>
+            </div>
           </Form.Item>
         </Form>
       </div>
@@ -238,7 +373,7 @@ export const TemplatePanel = (props: TemplatePanelProps) => {
                 <Button
                   type={"primary"}
                   onClick={() => {
-                    props.onSaveTemplateConfig?.(templateConfigs);
+                    props.onSaveTemplateConfig?.(props.templateConfigs);
                   }}
                 >
                   修改
