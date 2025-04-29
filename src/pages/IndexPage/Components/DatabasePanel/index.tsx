@@ -55,15 +55,14 @@ export const DatabasePanel = ({
                     placeholder={"请选择一个数据库"}
                     disabled={!databaseNames || databaseNames.length === 0}
                     value={databaseName}
-                  >
-                    {databaseNames?.map((item) => {
-                      return (
-                        <Select.Option value={item.name} key={item.name}>
-                          {item.comment ?? item.name}
-                        </Select.Option>
-                      );
+                    showSearch={true}
+                    options={databaseNames?.map((item) => {
+                      return {
+                        value: item.name,
+                        label: item.comment ?? item.name,
+                      };
                     })}
-                  </Select>
+                  ></Select>
                 </Form.Item>
               </Col>
               <Col span={12}>
@@ -73,15 +72,23 @@ export const DatabasePanel = ({
                     placeholder={"请选择一个数据表"}
                     disabled={!tableInfos || tableInfos.length === 0}
                     value={tableName}
-                  >
-                    {tableInfos?.map((item) => {
-                      return (
-                        <Select.Option value={item.name} key={item.name}>
-                          {`(${item.name})[${item.comment}]`}
-                        </Select.Option>
-                      );
+                    showSearch={true}
+                    filterOption={(input, option) => {
+                      const search = input.toLowerCase();
+                      const name = option?.value.toLowerCase();
+                      if (name?.includes(search)) {
+                        return true;
+                      }
+                      const label = option?.label.toLowerCase();
+                      return !!label?.includes(search);
+                    }}
+                    options={tableInfos?.map((item) => {
+                      return {
+                        value: item.name,
+                        label: `(${item.name})[${item.comment}]`,
+                      };
                     })}
-                  </Select>
+                  ></Select>
                 </Form.Item>
               </Col>
             </Row>
