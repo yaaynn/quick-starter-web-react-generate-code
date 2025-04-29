@@ -50,7 +50,7 @@ export const GenerateCodePanel = (props: GenerateCodePanelProps) => {
   const [tabsItems, setTabsItems] = useState<TabsProps["items"]>();
   const [checkedList, setCheckedList] = useState<number[]>([]);
   const [allChecked, setAllChecked] = useState<boolean | undefined>(void 0);
-
+  const [activeKey, setActiveKey] = useState<string>("");
   function handleOutputPathChange(outputPath: string, index: number) {
     const temp = codes.map((item, i) => {
       if (index === i) {
@@ -194,6 +194,9 @@ export const GenerateCodePanel = (props: GenerateCodePanelProps) => {
             onOutputPathChange={function (outputPath: string): void {
               handleOutputPathChange(outputPath, index);
             }}
+            onWrite2File={function () {
+              props.onWrite2File?.([item]);
+            }}
             {...item}
           />
         ),
@@ -205,7 +208,7 @@ export const GenerateCodePanel = (props: GenerateCodePanelProps) => {
 
   return (
     <>
-      <div className={"flex justify-end pb-5"}>
+      <div className={"flex justify-end pb-3 mb-3 border-b border-gray-300"}>
         <Button type={"primary"} onClick={props.onGenerateCode}>
           生成
         </Button>
@@ -216,7 +219,7 @@ export const GenerateCodePanel = (props: GenerateCodePanelProps) => {
       ) : (
         <>
           <Space direction={"vertical"} className={"w-full"}>
-            <Space>
+            <Space wrap={true}>
               <Checkbox
                 checked={allChecked}
                 indeterminate={allChecked === void 0}
@@ -226,9 +229,13 @@ export const GenerateCodePanel = (props: GenerateCodePanelProps) => {
               </Checkbox>
               {codes.map((code, index: number) => (
                 <Checkbox
+                  key={index}
                   checked={getChecked(index)}
                   onChange={(e) => {
                     handleCheckChange(e.target.checked, index);
+                  }}
+                  onClick={() => {
+                    setActiveKey(code.templateName.replace(".njk", ""));
                   }}
                 >{`[${code.templateName.replace(".njk", "")}]-${code.name}`}</Checkbox>
               ))}
@@ -262,8 +269,23 @@ export const GenerateCodePanel = (props: GenerateCodePanelProps) => {
               void 0
             )}
             <Divider />
-            <Tabs type={"card"} items={tabsItems} />
+            <Tabs
+              type={"card"}
+              items={tabsItems}
+              activeKey={activeKey}
+              onChange={(key) => {
+                setActiveKey(key);
+              }}
+            />
           </Space>
+
+          <div
+            className={"flex justify-end mt-3 pt-3 border-t border-gray-300"}
+          >
+            <Button type={"primary"} onClick={props.onGenerateCode}>
+              生成
+            </Button>
+          </div>
         </>
       )}
     </>
