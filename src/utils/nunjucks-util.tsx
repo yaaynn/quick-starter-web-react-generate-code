@@ -7,8 +7,9 @@ import {
   TemplateConfig,
 } from "../@types/global";
 import {
-  mysqlToJavaTypeMap,
-  mysqlToTsTypeMap,
+  JDBCTypeMap,
+  MysqlToJavaTypeMap,
+  MysqlToTsTypeMap,
 } from "../static-data/data-types.tsx";
 
 export interface NunjucksUtilDataProps {
@@ -47,7 +48,9 @@ export class NunjucksUtil {
     this.data = data;
     this.databaseType = databaseType;
 
-    this.env = nunjucks.configure({});
+    this.env = nunjucks.configure({
+      autoescape: false,
+    });
     this.initial();
   }
 
@@ -64,31 +67,54 @@ export class NunjucksUtil {
   }
 
   /**
-   * 将下划线字符串转换为驼峰命名 (camelCase)
-   * @example "my_variable_name" → "myVariableName"
+   * 将下划线或连字符字符串转换为驼峰命名 (camelCase)
+   * 同时处理已经存在的大写字母情况
+   * @example
+   * "my_variable_name" → "myVariableName"
+   * "my-variable-name" → "myVariableName"
+   * "my-Variable-Name" → "myVariableName"
+   * "MyVariableName" → "myVariableName" (如果已经是驼峰形式会转为小驼峰)
    */
   toCamelCase(value: string): string {
     if (!value) return "";
+
+    // 先统一处理连字符和下划线为相同分隔符，然后分割单词
     return value
+      .replace(/[-_]/g, "_") // 将所有连字符转为下划线
       .split("_")
       .map((word, index) => {
+        if (!word) return ""; // 处理连续分隔符情况
         if (index === 0) {
-          return word.toLowerCase(); // 首单词全小写
+          // 首单词全小写，除非原单词全大写(如HTTP)
+          return word.toLowerCase();
         }
-        return capitalizeFirstLetter(word);
+        // 后续单词首字母大写，其余小写
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
       })
       .join("");
   }
 
   /**
-   * 将下划线字符串转换为帕斯卡命名 (PascalCase)
-   * @example "my_variable_name" → "MyVariableName"
+   * 将下划线或连字符字符串转换为帕斯卡命名 (PascalCase)
+   * 同时处理已经存在的大写字母情况
+   * @example
+   * "my_variable_name" → "MyVariableName"
+   * "my-variable-name" → "MyVariableName"
+   * "my-Variable-Name" → "MyVariableName"
+   * "myVariableName" → "MyVariableName" (如果已经是驼峰形式会转为帕斯卡)
    */
   toPascalCase(value: string): string {
     if (!value) return "";
+
+    // 先统一处理连字符和下划线为相同分隔符，然后分割单词
     return value
+      .replace(/[-_]/g, "_") // 将所有连字符转为下划线
       .split("_")
-      .map((word) => capitalizeFirstLetter(word))
+      .map((word) => {
+        if (!word) return ""; // 处理连续分隔符情况
+        // 每个单词首字母大写，其余小写
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+      })
       .join("");
   }
 
@@ -99,12 +125,22 @@ export class NunjucksUtil {
   getSqlToCodeTypeName(value: string) {
     return this.data.sqlToCodeTypeMap?.get(value) || value;
   }
+  getAdditionValue(key: string, templateConfig: TemplateConfig) {
+    return templateConfig.additions?.find((item) => item.key === key)?.value;
+  }
+  convert2JDBCType(value: string) {
+    if (!value) return value;
+    return JDBCTypeMap.get(value.toUpperCase());
+  }
 
   initial() {
     this.env.addFilter("toApacheCase", this.toApacheCase);
     this.env.addFilter("toPascalCase", this.toPascalCase);
     this.env.addFilter("toCamelCase", this.toCamelCase);
     this.env.addFilter("getSqlToCodeTypeName", this.getSqlToCodeTypeName);
+
+    this.env.addGlobal("getAdditionValue", this.getAdditionValue);
+    this.env.addGlobal("convert2JDBCType", this.convert2JDBCType);
   }
 
   getTemplateConfig(name: string) {
@@ -118,10 +154,10 @@ export class NunjucksUtil {
       case "mysql":
         switch (codeType) {
           case "java":
-            return mysqlToJavaTypeMap;
-          case "js":
+            return MysqlToJavaTypeMap;
+          case "tsx":
           case "ts":
-            return mysqlToTsTypeMap;
+            return MysqlToTsTypeMap;
         }
     }
   }
@@ -129,10 +165,17 @@ export class NunjucksUtil {
   render(template: string, templateConfig: TemplateConfig): GenerateCodeResult {
     const sqlToCodeTypeMap = this.getSqlTypeMap(templateConfig.codeType);
 
+    console.log(templateConfig.name, {
+      ...this.data,
+      sqlToCodeTypeMap: sqlToCodeTypeMap,
+      mysqlToJavaTypeMap: MysqlToJavaTypeMap,
+      templateConfig: templateConfig,
+    });
+
     const codeContent = this.env.renderString(template, {
       ...this.data,
       sqlToCodeTypeMap: sqlToCodeTypeMap,
-      mysqlToJavaTypeMap: mysqlToJavaTypeMap,
+      mysqlToJavaTypeMap: MysqlToJavaTypeMap,
       templateConfig: templateConfig,
     });
     const [fileName, outputPath] = this.generateOutputPath(templateConfig);
