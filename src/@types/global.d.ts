@@ -46,10 +46,16 @@ export interface ColumnMetadata extends ColumnMetadataActivate {
   extra: string;
 }
 
+export interface KeyAndValue {
+  key: string;
+  value: string;
+}
+
 export interface TemplateConfig {
   name: string;
   outputPath: string;
   extension: string;
   codeType: string;
   naming: string;
+  additions: KeyAndValue[] | undefined;
 }
