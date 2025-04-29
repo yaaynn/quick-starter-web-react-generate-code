@@ -17,6 +17,8 @@ export const HttpUrls = {
     getTemplateConfig: "/api/generate/template/get-template-config",
     saveTemplateConfig: "/api/generate/template/save-template-config",
     getTemplateContent: "/api/generate/template/get-template-content",
+    getTemplateGroupConfigNames:
+      "/api/generate/template/get-template-group-config-names",
   },
   generateCode: {
     writeCode2File: "/api/generate/generate-code/write-code-2-file",
