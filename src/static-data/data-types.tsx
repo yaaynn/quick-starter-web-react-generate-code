@@ -1,4 +1,4 @@
-export const mysqlToJavaTypeMap: Map<string, string> = new Map([
+export const MysqlToJavaTypeMap: Map<string, string> = new Map([
   // 整数类型
   ["tinyint", "Byte"],
   ["smallint", "Short"],
@@ -43,7 +43,7 @@ export const mysqlToJavaTypeMap: Map<string, string> = new Map([
   ["geometry", "Object"],
 ]);
 
-export const mysqlToTsTypeMap = new Map<string, string>([
+export const MysqlToTsTypeMap = new Map<string, string>([
   ["int", "number"],
   ["integer", "number"],
   ["tinyint", "number"],
@@ -81,4 +81,59 @@ export const mysqlToTsTypeMap = new Map<string, string>([
   ["set", "string[]"],
 
   ["json", "any"], // 或根据情况指定类型
+]);
+
+export const JDBCTypeMap = new Map<string, string>([
+  // 整数类型
+  ["INT", "INTEGER"],
+  ["INTEGER", "INTEGER"],
+  ["TINYINT", "TINYINT"],
+  ["SMALLINT", "SMALLINT"],
+  ["MEDIUMINT", "INTEGER"],
+  ["BIGINT", "BIGINT"],
+  ["SERIAL", "BIGINT"],
+  ["BIGSERIAL", "BIGINT"],
+
+  // 字符串类型
+  ["CHAR", "CHAR"],
+  ["VARCHAR", "VARCHAR"],
+  ["TEXT", "LONGVARCHAR"],
+  ["LONGTEXT", "LONGVARCHAR"],
+  ["NVARCHAR", "NVARCHAR"],
+  ["NCHAR", "NCHAR"],
+  ["CLOB", "CLOB"],
+
+  // 日期时间
+  ["DATE", "DATE"],
+  ["TIME", "TIME"],
+  ["DATETIME", "TIMESTAMP"],
+  ["TIMESTAMP", "TIMESTAMP"],
+  ["TIMESTAMPTZ", "TIMESTAMP"],
+  ["YEAR", "DATE"],
+
+  // 二进制
+  ["BLOB", "BLOB"],
+  ["LONGBLOB", "LONGVARBINARY"],
+  ["BINARY", "BINARY"],
+  ["VARBINARY", "VARBINARY"],
+  ["BYTEA", "BINARY"],
+
+  // 布尔
+  ["BIT", "BIT"],
+  ["BOOLEAN", "BOOLEAN"],
+  ["BOOL", "BOOLEAN"],
+
+  // 数值
+  ["FLOAT", "FLOAT"],
+  ["DOUBLE", "DOUBLE"],
+  ["DECIMAL", "DECIMAL"],
+  ["NUMERIC", "NUMERIC"],
+  ["REAL", "REAL"],
+
+  // 特殊类型
+  ["JSON", "VARCHAR"],
+  ["JSONB", "VARCHAR"],
+  ["UUID", "OTHER"],
+  ["ENUM", "VARCHAR"],
+  ["SET", "VARCHAR"],
 ]);
