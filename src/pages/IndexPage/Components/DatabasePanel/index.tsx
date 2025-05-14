@@ -1,6 +1,7 @@
-import { Col, Form, Row, Select } from "antd";
+import { Button, Col, Form, Row, Select } from "antd";
 import { NameAndComment } from "../../../../@types/global";
 import { ReactNode, useEffect, useState } from "react";
+import { ReloadOutlined } from "@ant-design/icons";
 
 export interface DatabasePanelProps {
   databaseName?: string;
@@ -9,6 +10,10 @@ export interface DatabasePanelProps {
 
   onDatabaseChange?: (name: string) => void;
   onTableChange?: (databaseName?: string, tableInfo?: NameAndComment) => void;
+
+  onRefreshDatabaseNames?: () => void;
+  onRefreshTableNames?: () => void;
+  onRefreshColumns?: () => void;
 
   children?: ReactNode | ReactNode[];
 }
@@ -20,6 +25,10 @@ export const DatabasePanel = ({
   onDatabaseChange,
   onTableChange,
   children,
+
+  onRefreshColumns,
+  onRefreshDatabaseNames,
+  onRefreshTableNames,
 }: DatabasePanelProps) => {
   const [tableName, setTableName] = useState<string | undefined>(void 0);
 
@@ -47,8 +56,8 @@ export const DatabasePanel = ({
       <div className={"box-border  w-full p-1"}>
         <div>
           <Form className={""}>
-            <Row gutter={16}>
-              <Col span={12}>
+            <Row gutter={8}>
+              <Col span={10}>
                 <Form.Item label={"数据库"}>
                   <Select
                     onChange={handleDatabaseChange}
@@ -65,7 +74,15 @@ export const DatabasePanel = ({
                   ></Select>
                 </Form.Item>
               </Col>
-              <Col span={12}>
+              <Col
+                span={1}
+                onClick={() => {
+                  onRefreshDatabaseNames?.();
+                }}
+              >
+                <Button icon={<ReloadOutlined />}></Button>
+              </Col>
+              <Col span={10}>
                 <Form.Item label={"数据表"}>
                   <Select
                     onChange={handleTableChange}
@@ -90,6 +107,26 @@ export const DatabasePanel = ({
                     })}
                   ></Select>
                 </Form.Item>
+              </Col>
+              <Col span={1}>
+                <Button
+                  disabled={!databaseName}
+                  icon={<ReloadOutlined />}
+                  onClick={() => {
+                    onRefreshTableNames?.();
+                  }}
+                ></Button>
+              </Col>
+              <Col span={2}>
+                <Button
+                  disabled={!tableName}
+                  icon={<ReloadOutlined />}
+                  onClick={() => {
+                    onRefreshColumns?.();
+                  }}
+                >
+                  刷新列
+                </Button>
               </Col>
             </Row>
           </Form>

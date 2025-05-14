@@ -2,7 +2,7 @@
   "name": "quick-starter-web-react-generate-code",
   "author": "yaaynn",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",

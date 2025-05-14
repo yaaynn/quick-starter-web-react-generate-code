@@ -446,6 +446,15 @@ export const IndexPage = () => {
             tableInfos={tableInfos}
             onDatabaseChange={handleDatabaseNameChange}
             onTableChange={handleTableInfoChange}
+            onRefreshDatabaseNames={() => {
+              doRefreshDatabaseNames();
+            }}
+            onRefreshTableNames={() => {
+              handleDatabaseNameChange(databaseName ?? "");
+            }}
+            onRefreshColumns={() => {
+              handleTableInfoChange(databaseName, tableInfo);
+            }}
           >
             {columnsDataSource && columnsDataSource.length > 0 ? (
               <DatabaseColumnTable
